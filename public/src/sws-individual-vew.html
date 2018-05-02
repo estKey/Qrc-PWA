@@ -1,0 +1,128 @@
+<link rel="import" href="../bower_components/polymerfire/polymerfire.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+
+<link rel="import" href="shared-styles.html">
+
+<link rel="import" href="resource-list-object.html">
+
+<dom-module id="sws-individual-view">
+  <template>
+    <style include="shared-styles">
+        :host {
+            display: block;
+
+            padding: 10px;
+        }
+		
+		h4{
+			padding:0px;
+			margin:0px;
+		}
+    </style>
+  
+    <!-- This views a single resource with the UID: "{{target}}"-->
+
+
+	<template is="dom-repeat" items="{{resources}}" as="note" filter="{{getTarget(target)}}">
+	  <div class="card">
+		<!-- This is an object responsible for displaying a resource's information tab 
+		
+		Displayed on the main card:
+		 - name of resource
+		 - description		 
+		Displayed on "contact info" card (will display only what is available):
+		 - location (if available)
+		 - hours (if available)
+		 - email (if available)
+		 - all phone numbers
+		 - displaying all links in a list
+		
+		-->
+		<h2>Currently Viewing: [[note.name]]</h2>
+		<p>[[note.desc]]</p>
+	  </div>
+	  <div class="card">
+		<h3>Contact Information:</h3>
+		
+		<template is="dom-if" if="{{hasNAN(note.location)}}">
+		  <h4>Where:</h4>
+		  <p>[[note.location]]</p>
+		</template>
+		
+		<template is="dom-if" if="{{hasNAN(note.hours)}}">
+		  <h4>Hours:</h4>
+		  <p>[[note.hours]]</p>
+		</template>
+		
+		<template is="dom-if" if="{{hasNAN(note.email)}}">
+		  <h4>Email:</h4>
+		  <p>[[note.email]]</p>
+		</template>
+		
+		<template is="dom-if" if="{{hasNonNull(note.phones)}}">
+		  <h4>Phone:</h4>
+		  <template is="dom-repeat" items="{{_toArray(note.phones)}}" as="phone">
+		    <p>[[phone.value.name]]: <a href="tel:[[phone.value.number]]">[[parsePhoneNumber(phone.value.number)]]</a></p>
+		  </template>
+		</template>
+		
+		<template is="dom-if" if="{{hasNonNull(note.links)}}">
+		  <h4>View Online:</h4>
+		  <template is="dom-repeat" items="{{_toArray(note.links)}}" as="link">
+		    <p><a href="{{link.value.url}}">[[link.value.name]]</a></p>
+		  </template>
+		</template>
+
+      </div>
+	</template>
+
+  </template>
+
+<script>
+  Polymer({
+    is: 'sws-individual-view',
+	
+	getTarget(string){
+		if (!string){
+			return null;
+		} else {
+			return function(note) {
+				if(string.substr(1) == note.uid){
+					return true;
+				}
+				return false;
+			}
+		}
+	},
+	
+	hasNAN(data){
+		if(data != null){
+			return data != "" && data != "n/a";
+		};
+		return false;
+	},
+	
+	hasNonNull(data){
+		return data!=null
+	},
+	
+	_toArray: function(obj) {
+        return Object.keys(obj).map(function(key) {
+            return {
+                name: key,
+                value: obj[key]
+            };
+        });
+    },
+	
+	parsePhoneNumber(number) {
+		str = number.toString();
+		return '('+str.substring(0,3)+') - '+str.substring(3,6)+' - '+str.substring(6);
+	}
+	  	  
+  });
+</script>
+
+</dom-module>

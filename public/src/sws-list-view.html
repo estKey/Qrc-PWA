@@ -1,0 +1,142 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="shared-styles.html">
+
+<link rel="import" href="../bower_components/polymerfire/polymerfire.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+
+<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+
+<link rel="import" href="resource-list-object.html">
+
+<!-- Service Tags:  email, phone, in-person, peer, facebook -->
+
+<dom-module id="sws-list-view">
+<template>
+    <style include="shared-styles">
+        :host {
+            display: block;
+
+            padding: 10px;
+        }
+    </style>
+  <div class="top-header">
+      <p>Currently viewing {{niceStringOf(filter)}}</p>
+	  <p>Use the buttons below to help find what you need, and click on any resource to see information about it.</p>
+	  
+	  <paper-checkbox checked="{{phonesort}}">Phone</paper-checkbox>
+	  <paper-checkbox checked="{{emailsort}}">Email</paper-checkbox>
+	  <paper-checkbox checked="{{inpersonsort}}">In Person</paper-checkbox>
+	  <paper-checkbox checked="{{peersort}}">Peer</paper-checkbox>
+	  <paper-checkbox checked="{{facebooksort}}">Facebook</paper-checkbox>
+	  <!--<paper-radio-button>Email</paper-radio-button>-->
+
+  </div>
+
+  <div class="thick-card">
+    <div class="notes">
+	  <template id="resourceList" is="dom-repeat" items="{{resources}}" as="note" filter="{{computeFilter(filter)}}">
+		<!-- This is an object responsible for displaying a resource's information tab -->
+		<template is="dom-if" if="{{doCheckboxes(phonesort,note.phones,emailsort,note.email,inpersonsort,peersort,facebooksort,note.service)}}">
+		  <resource-list-object resource="[[note]]"></resource-list-object>
+		</template>
+	  </template>
+	  
+	  <p>End of Resources / No Resources to Display</p>
+    </div>
+  </div>
+
+</template>
+<!-- 
+The computeFilter(string) is the magic behind the filtering
+ - It takes an argument 'filter' which is the subroute passed by sws-main
+ - It then returns a function which will be used for this instance of sws-list-view
+To make the filtering more advanced, edit the return function(note)
+ - 'note.type' is the type id in the database
+ - 'string' is the current subroute
+Currently it can only filter one category.
+TODO:
+ - Make it turn note.type and string into arrays and compare if everything in [string] is in [note.type]
+ -->
+<script>
+  Polymer({
+    is: 'sws-list-view',
+	
+	computeFilter(string){
+		if (!string){
+			return null;
+		} else {
+			return function(note) {
+				if(string.substr(1) == 'view-all'){
+					return true;
+				}
+				/*console.log("DEBUG: Checking phonesort: "+this[phonesort]);
+				if(this[phonesort] == true){
+					return false;
+				}*/
+				return note.type.includes(string.substr(1));
+			}
+		}
+	},
+	properties: {
+      phonesort: {
+        type: Boolean,
+        value: false
+      }
+	},
+	
+	hasNAN(data){
+		if(data != null){
+			return data !== "" && data !== "n/a";
+		}
+		return false;
+	},
+	
+	hasTag(data,tag){
+		return data.includes(tag);
+	},
+	
+	doCheckboxes(sort1,data1,sort2,data2,sort3,sort4,sort5,servicetags){
+		if(sort1 === true && data1 == null){
+			return false;
+		}
+		if(sort2 === true){
+			if(data2 == null){
+				return false;
+			}else{
+				if(data2 === "" || data2 === "n/a"){
+					return false;
+				}
+			}
+		}
+		if(sort3 === true && !servicetags.includes("in-person")){
+			return false;
+		}
+		if(sort4 === true && !servicetags.includes("peer")){
+			return false;
+		}
+		if(sort5 === true && !servicetags.includes("facebook")){
+			return false;
+		}
+		return true;
+	},
+	
+	niceStringOf(string){
+		if(string.substr(1) == 'view-all'){
+			return 'all resources.';
+		}else{
+			return string.substr(1)+' resources';
+		}
+	}
+	
+	/*refreshFilter: function() {
+		this.$.resourceList.render();
+    }*/
+	  	  
+  });
+</script>
+
+</dom-module>
